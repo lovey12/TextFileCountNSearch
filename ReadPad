@@ -1,0 +1,100 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * 
+ * @author Lovey Outer class to handle all input file validations
+ */
+public class ReadPad {
+
+	private static FileLogger logger = FileLogger.getInstance();;
+	private static Map<String, WordDetail> wordMap = new HashMap<String, WordDetail>();
+	private static boolean isEmptyFile = false;
+
+	public static Map<String, WordDetail> getWordMap() {
+		return wordMap;
+	}
+
+	public static void readInputFile(String fileName) {
+
+		try {
+			readFile(fileName);
+		} catch (FileValidationException e) {
+			logger.printMessage(e.getMessage());
+			System.exit(0);
+		}
+
+	}
+
+	private static void readFile(String fileName)
+			throws FileValidationException {
+
+		if (fileName == null || fileName.isEmpty()) {
+			throw new FileValidationException(
+					"Input file name can not be null or empty!!");
+		}
+		// check for only text file
+		if (!(fileName.endsWith(".txt"))) {
+			throw new FileValidationException(
+					"Input file extension should be .txt only!!!");
+		}
+		// All well with input file name..go ahead
+		try {
+			logger.printMessage("!!----Processing Input File----!!");
+			File file = new File(fileName);
+			BufferedReader bufferReader = new BufferedReader(new FileReader(
+					file));
+			if (bufferReader != null) {
+				WordCharacterCountThread runnable = new WordCharacterCountThread(
+						bufferReader);
+				Thread thread = new Thread(runnable);
+				thread.start();
+				thread.join();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(0);
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public static boolean searchPattern(String pattern) {
+
+		if (pattern == null || pattern.isEmpty()) {
+			logger.printMessage("Pattern is null or empty!!");
+			return false;
+		}
+		if (isEmptyFile()) {
+			logger.printMessage("Cannot found pattern in empty file!!");
+			return false;
+		}
+		pattern = pattern.toLowerCase(); // Case-sensitive handling
+		// search for pattern as a word stored in map
+		if (wordMap.get(pattern) == null) {
+			logger.printMessage("Cannot found pattern!!!");
+			return false;
+		} else {
+			logger.printMessage("Found pattern as -");
+			logger.printDetails(wordMap.get(pattern).toString());
+			logger.printMessage("!!----Finished processing Input File----!!");
+			return true;
+		}
+
+	}
+
+	public static boolean isEmptyFile() {
+		return isEmptyFile;
+	}
+
+	public static void setEmptyFile(boolean value) {
+		ReadPad.isEmptyFile = value;
+	}
+
+}
