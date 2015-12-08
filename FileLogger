@@ -1,0 +1,35 @@
+
+
+/**
+ * 
+ * @author Lovey
+ * Custom Logger to log result, designed to be Singleton
+ * NOTE- For Now, We are printing in console but in extension we can use file to write logs.
+ */
+public class FileLogger{
+
+     private static FileLogger instance=null;
+     
+     private FileLogger(){
+         
+     }
+     
+     public static synchronized FileLogger getInstance(){
+         
+         if(instance==null){
+             instance=new FileLogger(); 
+         }
+         return instance;
+     }
+     
+     public  void printDetails(String message){
+    	 System.out.println(message+"\n");
+     }
+     
+     public  void printMessage(String message){
+    	 System.out.println(message+"\n");
+     }
+     
+     
+     
+}
