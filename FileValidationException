@@ -1,0 +1,34 @@
+/**
+ * 
+ * @author Lovey
+ * Custom Exception to notify invalid input file name  
+ */
+public class FileValidationException extends Exception {
+	
+	    
+	    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -886205249886738865L;
+		private String message;
+	    
+	    public FileValidationException(){
+	        super();
+	    }
+	    
+	    public FileValidationException(String message){
+	        super(message);
+	        this.message=message;
+	    }
+	    
+	    public String getMessage(){
+	        return message;
+	    }
+	    
+	    public String toString(){
+	        return message;
+	    }
+	    
+	}
+
+
