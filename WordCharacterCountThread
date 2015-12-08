@@ -1,0 +1,235 @@
+import java.util.*;
+import java.io.*;
+
+/**
+ * 
+ * @author Lovey Thread that implements runnable and whose job is to count the
+ *         characters, words and sentence.. Business logic goes here
+ */
+public class WordCharacterCountThread implements Runnable {
+
+	private Integer totalWordCount = 0;
+	private Integer sentenceCount = 0;
+	private Integer characterCount = 0;
+	private BufferedReader reader = null;
+	Map<String, WordDetail> wordMap = ReadPad.getWordMap();
+	Integer lineCount = 0;
+	FileLogger logger = FileLogger.getInstance();
+
+	public WordCharacterCountThread() {
+	}
+
+	public WordCharacterCountThread(BufferedReader reader) {
+		this.reader = reader;
+	}
+
+	@Override
+	public void run() {
+		String line = null;
+
+		try {
+			while ((line = reader.readLine()) != null) {
+				lineCount++;
+				scanLine(line);
+			}
+			logger.printDetails("********************************************"
+					+ "\n");
+			logger.printDetails("Total number of sentences = " + sentenceCount
+					+ ".\n");
+			logger.printDetails("Total number of words = " + totalWordCount
+					+ ".\n");
+			logger.printDetails("Total number of DISTINCT words = "
+					+ wordMap.size() + ".\n");
+			logger.printDetails("Total number of characters = "
+					+ characterCount + ".\n");
+			if ((sentenceCount <= 0) && (totalWordCount <= 0)
+					&& (characterCount <= 0)) {
+				ReadPad.setEmptyFile(true);
+				logger.printDetails("...Empty File...");
+			}
+			logger.printDetails("********************************************"
+					+ "\n");
+
+		} catch (IOException e) {
+			logger.printMessage(e.getMessage());
+		}
+	}
+
+	private void scanLine(String line) {
+		int startWord = 0;
+		for (int i = 0; i < line.length(); i++) {
+			// character Count including dots,commas,whitespaces etc
+			characterCount++;
+			if (line.charAt(0) == '.') {
+				continue;
+			}
+			// handling every special character
+			if (isSpecialCharacter(line.charAt(i))) {
+				if (!isSpecialCharacter(line.charAt(i - 1))) {
+					String word = line.substring(startWord, i);
+					word = word.toLowerCase(); // handling case sensitive words
+					// check if this word exists in map
+					if (wordMap.get(word) != null) {
+						WordDetail details = wordMap.get(word);
+						details.addCount(1);
+						details.setLineNum(lineCount);
+					} else {
+						WordDetail details = new WordDetail();
+						details.setCount(1);
+						details.setLineNum(lineCount);
+						wordMap.put(word, details);
+					}
+					totalWordCount++;
+				}
+				// counting number of sentences (IF SENTENCE ENDS WITH "?").
+				if (isQuestionMark(line.charAt(i))) {
+					if (i != (line.length() - 1)) {
+						if ((isWhiteSpace(line.charAt(i + 1))
+								|| line.charAt(i + 1) == '\n')
+								&& !(isSpecialCharacter(line.charAt(i - 1)))) {
+							sentenceCount++;
+						}
+					}
+					if (i == (line.length() - 1)) {
+						sentenceCount++;
+						continue;
+					}
+				}
+
+				startWord = i + 1;
+				continue;
+			}
+
+			// counting number of sentences (IF SENTENCE ENDS WITH "?").
+			if (isQuestionMark(line.charAt(i))) {
+				if (i != (line.length() - 1)) {
+					if (isWhiteSpace(line.charAt(i + 1))
+							|| line.charAt(i + 1) == '\n'
+							|| !(isSpecialCharacter(line.charAt(i - 1)))) {
+						sentenceCount++;
+						continue;
+					}
+				}
+				if (i == (line.length() - 1)) {
+					sentenceCount++;
+					continue;
+				}
+			}
+
+			if (isDot(line.charAt(i))) {
+
+				if (!isDot(line.charAt(i - 1))) {
+
+					String word = line.substring(startWord, i);
+					word = word.toLowerCase(); // handling case sensitive words
+					// check if this word exists in map
+					if (wordMap.get(word) != null) {
+						WordDetail details = wordMap.get(word);
+						details.addCount(1);
+						details.setLineNum(lineCount);
+					} else {
+						WordDetail details = new WordDetail();
+						details.setCount(1);
+						details.setLineNum(lineCount);
+						wordMap.put(word, details);
+					}
+					totalWordCount++;
+					startWord = i + 1;
+				}
+				// counting number of sentences.
+				if (i != (line.length() - 1)) {
+					if (isWhiteSpace(line.charAt(i + 1))
+							|| line.charAt(i + 1) == '\n') {
+						sentenceCount++;
+						continue;
+					}
+				}
+				if (i == (line.length() - 1)) {
+					sentenceCount++;
+					continue;
+				}
+				if (isDot(line.charAt(i - 1))) {
+					startWord = i + 1;
+					continue;
+				}
+			}
+
+			// counting number of words
+			if (isWhiteSpace(line.charAt(i))) {
+				if (isDot(line.charAt(i - 1))) {
+					startWord = i + 1;
+					continue;
+				}
+				if (isQuestionMark(line.charAt(i - 1))) {
+					startWord = i + 1;
+					continue;
+				}
+				if (isComma(line.charAt(i - 1))) {
+					startWord = i + 1;
+					continue;
+				} else {
+					// startWord++;
+					String word = line.substring(startWord, i);
+					word = word.toLowerCase(); // handling case sensitive words
+					totalWordCount++;
+					// check if this word exists in map
+					if (wordMap.get(word) != null) {
+						WordDetail details = wordMap.get(word);
+						details.addCount(1);
+						details.setLineNum(lineCount);
+					} else {
+						WordDetail details = new WordDetail();
+						details.setCount(1);
+						details.setLineNum(lineCount);
+						wordMap.put(word, details);
+					}
+				}
+				startWord = i + 1;
+			}
+		}
+
+	}
+
+	private boolean isWhiteSpace(char c) {
+		if (c == ' ') {
+			return true;
+		}
+		return false;
+
+	}
+
+	private boolean isDot(char c) {
+		if (c == '.') {
+			return true;
+		}
+		return false;
+
+	}
+
+	private boolean isQuestionMark(char c) {
+		if (c == '?') {
+			return true;
+		}
+		return false;
+
+	}
+
+	private boolean isComma(char c) {
+		if (c == ',') {
+			return true;
+		}
+		return false;
+
+	}
+
+	private boolean isSpecialCharacter(char c) {
+
+		if (!(Character.isLetterOrDigit(c)) && !(c == '.') && !(c == ' ')) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+}
